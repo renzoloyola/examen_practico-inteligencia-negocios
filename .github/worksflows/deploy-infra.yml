@@ -1,0 +1,43 @@
+# Nombre del workflow que aparecerá en la pestaña "Actions" de GitHub
+name: 'Desplegar Infraestructura de Terraform en Azure'
+
+# Define cuándo se ejecutará este workflow
+on:
+  push:
+    branches:
+      - main # Se activa cada vez que haces un 'push' a la rama 'main'
+
+jobs:
+  terraform:
+    name: 'Aplicar plan de Terraform'
+    runs-on: ubuntu-latest # Se ejecutará en una máquina virtual con Ubuntu
+
+    steps:
+      # Paso 1: Descarga tu código del repositorio a la máquina virtual
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # Paso 2: Inicia sesión en Azure (MÉTODO MODIFICADO)
+      # Usa los secretos de ID para iniciar el login interactivo
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Paso 3: Instala Terraform en la máquina virtual
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      # Paso 4: Ejecuta 'terraform init'
+      - name: Terraform Init
+        run: terraform init
+
+      # Paso 5: Ejecuta 'terraform plan'
+      - name: Terraform Plan
+        run: terraform plan
+
+      # Paso 6: Ejecuta 'terraform apply' para construir la infraestructura
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
